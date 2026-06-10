@@ -1,0 +1,4 @@
+# Docs-only repo: Linguist excludes Markdown (prose/documentation) from the
+# language stats by default, so nothing shows. Count it.
+*.md linguist-detectable
+*.md -linguist-documentation
