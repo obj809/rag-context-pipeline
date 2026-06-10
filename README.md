@@ -23,11 +23,41 @@ Each sub-repo has its own README, `requirements.txt`, and `.env.example`.
 
 ## How it works
 
+```mermaid
+flowchart LR
+    subgraph indexing["indexing-rag-context-pipeline<br/>(run once per document)"]
+        pdf[/"data/net-zero-report.pdf"/] --> build["build_index.py<br/>load → chunk → embed<br/>(BGE, local)"]
+    end
+
+    subgraph vectordb["vector-db-rag-context-pipeline<br/>(Docker)"]
+        chunks[("Postgres + pgvector<br/>chunks table<br/>text · embedding · page · embedding_model")]
+    end
+
+    subgraph engine["engine-rag-context-pipeline"]
+        retriever["retriever.py<br/>SQL cosine top-k"] --> chain["chain.py<br/>LCEL answer chain"]
+        repl["ask.py<br/>(REPL)"] --> chain
+        eval["eval/run_eval.py<br/>hit-rate@k · MRR"] --> retriever
+    end
+
+    subgraph backend["backend-rag-context-pipeline<br/>(FastAPI, Docker)"]
+        api["api/main.py<br/>POST /ask · GET /health"]
+    end
+
+    user([user / client])
+    openai["OpenAI<br/>gpt-5.4-nano"]
+
+    build -- "writes rows<br/>(drop + recreate)" --> chunks
+    chunks -- "top-k chunks" --> retriever
+    chain -- "question + chunks" --> openai
+    openai -- "page-cited answer" --> chain
+    api -. "imports retriever + chain<br/>(sys.path bridge)" .-> chain
+    user -- "HTTP" --> api
+    user -- "terminal" --> repl
 ```
-indexing-…  ──writes──▶  vector-db-…  ──reads──▶  engine-…  ◀─ imports ─ backend-…
-PDF→chunks→embeddings    Postgres/pgvector       retriever+chain          HTTP /ask
-                          (chunks table)          REPL + eval
-```
+
+The dashed edge is a **build/import-time** relationship, not a network call: the
+backend imports the engine's leaf modules (and its Docker image copies them in),
+so at runtime only the database and OpenAI are remote.
 
 The repos communicate **only** through the Postgres `chunks` table. Indexing writes
 the chunks, their embeddings, the source `page`, and the `embedding_model` name once
