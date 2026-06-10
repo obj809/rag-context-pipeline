@@ -29,11 +29,14 @@ cd engine-rag-context-pipeline
 python ask.py                              # interactive REPL
 python eval/run_eval.py                    # hit-rate@k / MRR (no API key needed)
 python eval/run_eval.py --k 10 --show-misses
+docker compose run --rm engine                            # or run the REPL in Docker (run-on-demand, no `up`)
+docker compose run --rm engine python eval/run_eval.py    # eval in Docker (no key needed)
 
 # 4. backend-rag-context-pipeline — HTTP API (docs at http://localhost:8000/docs)
 cd backend-rag-context-pipeline
 uvicorn api.main:app --reload
 uvicorn api.main:app --host 0.0.0.0 --port 8000     # bind explicitly
+docker compose up --build                            # or run it in Docker (joins the vector-db network)
 curl localhost:8000/health
 # more curl examples: backend-rag-context-pipeline/curl-commands.md
 ```
