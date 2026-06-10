@@ -1,0 +1,14 @@
+example-architecture
+CLAUDE.md
+.env
+.venv
+data/index/
+
+__pycache__
+
+# nested per-concern repos — each is its own git repo with its own remote;
+# the umbrella must not track them (avoids accidental gitlinks/embedded repos)
+backend-rag-context-pipeline/
+vector-db-rag-context-pipeline/
+engine-rag-context-pipeline/
+indexing-rag-context-pipeline/
