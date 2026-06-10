@@ -1,4 +1,7 @@
-# Docs-only repo: Linguist excludes Markdown (prose/documentation) from the
-# language stats by default, so nothing shows. Count it.
+# Docs-only umbrella for a Python project: Linguist excludes Markdown
+# (prose/documentation) from the language stats by default, and there are no
+# code files here. Count the docs and label the repo as Python to match the
+# project (cosmetic override — affects the stats bar, not rendering).
 *.md linguist-detectable
 *.md -linguist-documentation
+*.md linguist-language=Python
