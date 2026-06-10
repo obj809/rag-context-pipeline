@@ -14,10 +14,10 @@ itself now holds only this documentation; all code lives in the sub-repos.
 
 | Repo | Owns | Entry point |
 |---|---|---|
-| [`vector-db-rag-context-pipeline/`](vector-db-rag-context-pipeline/) | Postgres + pgvector (Docker) | `docker compose up -d` |
-| [`indexing-rag-context-pipeline/`](indexing-rag-context-pipeline/) | PDF → chunks → embeddings → `chunks` table; the source PDF | `python build_index.py` |
-| [`engine-rag-context-pipeline/`](engine-rag-context-pipeline/) | query engine (retriever + LCEL chain), the REPL, and the retrieval eval | `python ask.py` / `python eval/run_eval.py` |
-| [`backend-rag-context-pipeline/`](backend-rag-context-pipeline/) | HTTP API (FastAPI) over the engine | `uvicorn api.main:app` |
+| [`vector-db-rag-context-pipeline/`](https://github.com/obj809/vector-db-rag-context-pipeline) | Postgres + pgvector (Docker) | `docker compose up -d` |
+| [`indexing-rag-context-pipeline/`](https://github.com/obj809/indexing-rag-context-pipeline) | PDF → chunks → embeddings → `chunks` table; the source PDF | `python build_index.py` |
+| [`engine-rag-context-pipeline/`](https://github.com/obj809/engine-rag-context-pipeline) | query engine (retriever + LCEL chain), the REPL, and the retrieval eval | `python ask.py` / `python eval/run_eval.py` |
+| [`backend-rag-context-pipeline/`](https://github.com/obj809/backend-rag-context-pipeline) | HTTP API (FastAPI) over the engine | `uvicorn api.main:app` |
 
 Each sub-repo has its own README, `requirements.txt`, and `.env.example`.
 
