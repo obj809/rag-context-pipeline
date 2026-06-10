@@ -24,6 +24,7 @@ Each sub-repo has its own README, `requirements.txt`, and `.env.example`.
 ## How it works
 
 ```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 110}}}%%
 flowchart LR
     subgraph indexing["indexing-rag-context-pipeline<br/>(run once per document)"]
         pdf[/"data/net-zero-report.pdf"/] --> build["build_index.py<br/>load → chunk → embed<br/>(BGE, local)"]
