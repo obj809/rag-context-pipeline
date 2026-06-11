@@ -41,7 +41,7 @@ flowchart LR
     end
 
     subgraph backend["backend-rag-context-pipeline<br/>(FastAPI, Docker)"]
-        api["api/main.py<br/>POST /ask · GET /health"]
+        api["api/main.py<br/>POST /ask · POST /chat (stream) · GET /health"]
     end
 
     user([user / client])
@@ -65,7 +65,9 @@ the chunks, their embeddings, the source `page`, and the `embedding_model` name 
 per document; the engine retrieves the top-k via a SQL cosine-distance search
 (`ORDER BY embedding <=> query LIMIT k`) and composes the answer as a LangChain LCEL
 chain (`retriever | prompt | llm | parser`). The backend imports the engine's leaf
-modules to expose the same chain over HTTP. The `embedding_model` column is the glue
+modules to expose the same chain over HTTP — as blocking JSON (`/ask`) and as a
+streamed `text/plain` chat endpoint (`/chat`, consumed by a separate chat-frontend
+project). The `embedding_model` column is the glue
 that stops the query side embedding with a different model than the index was built
 with.
 

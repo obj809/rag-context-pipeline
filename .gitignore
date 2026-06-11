@@ -3,6 +3,7 @@ CLAUDE.md
 .env
 .venv
 data/index/
+integration-plan.md
 
 __pycache__
 
