@@ -4,6 +4,10 @@ CLAUDE.md
 .venv
 data/index/
 integration-plan.md
+deployment-plan.md
+notes.md
+hostinger.png
+to-do.md
 
 __pycache__
 
