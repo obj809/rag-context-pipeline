@@ -8,6 +8,8 @@ deployment-plan.md
 notes.md
 hostinger.png
 to-do.md
+frontend-auth-handoff.md
+frontend-key-setup.md
 
 __pycache__
 
@@ -16,3 +18,4 @@ backend-rag-context-pipeline/
 vector-db-rag-context-pipeline/
 engine-rag-context-pipeline/
 indexing-rag-context-pipeline/
+.DS_Store
