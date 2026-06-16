@@ -23,38 +23,7 @@ Each sub-repo has its own README, `requirements.txt`, and `.env.example`.
 
 ## How it works
 
-```mermaid
-%%{init: {"flowchart": {"nodeSpacing": 110}}}%%
-flowchart LR
-    subgraph indexing["indexing-rag-context-pipeline<br/>(run once per document)"]
-        pdf[/"data/net-zero-report.pdf"/] --> build["build_index.py<br/>load → chunk → embed<br/>(BGE, local)"]
-    end
-
-    subgraph vectordb["vector-db-rag-context-pipeline<br/>(Docker)"]
-        chunks[("Postgres + pgvector<br/>chunks table<br/>text · embedding · page · embedding_model")]
-    end
-
-    subgraph engine["engine-rag-context-pipeline"]
-        retriever["retriever.py<br/>SQL cosine top-k"] --> chain["chain.py<br/>LCEL answer chain"]
-        repl["ask.py<br/>(REPL)"] --> chain
-        eval["eval/run_eval.py<br/>hit-rate@k · MRR"] --> retriever
-    end
-
-    subgraph backend["backend-rag-context-pipeline<br/>(FastAPI, Docker)"]
-        api["api/main.py<br/>POST /ask · POST /chat (stream) · GET /health"]
-    end
-
-    user([user / client])
-    openai["OpenAI<br/>gpt-5.4-nano"]
-
-    build -- "writes rows<br/>(drop + recreate)" --> chunks
-    chunks -- "top-k chunks" --> retriever
-    chain -- "question + chunks" --> openai
-    openai -- "page-cited answer" --> chain
-    api -. "imports retriever + chain<br/>(sys.path bridge)" .-> chain
-    user -- "HTTP" --> api
-    user -- "terminal" --> repl
-```
+![Architecture diagram: indexing writes chunks to Postgres + pgvector; the engine retrieves top-k chunks and composes a page-cited answer via OpenAI; the backend exposes it over HTTP](diagram.png)
 
 The dashed edge is a **build/import-time** relationship, not a network call: the
 backend imports the engine's leaf modules (and its Docker image copies them in),
@@ -70,6 +39,14 @@ streamed `text/plain` chat endpoint (`/chat`, consumed by a separate chat-fronte
 project). The `embedding_model` column is the glue
 that stops the query side embedding with a different model than the index was built
 with.
+
+Both write endpoints are guarded by an **optional shared-secret header**. Set
+`RAG_API_KEY` and every `/ask`/`/chat` request must carry `X-API-Key: <value>` (a
+timing-safe check, rejected with `401` before any embedding/retrieval/LLM work), and
+the interactive docs (`/docs`, `/redoc`, `/openapi.json`) are disabled; leave it
+unset and the keyless local-dev workflow is unchanged. `GET /health` stays open
+either way. This is the gate that lets the endpoint go public without burning OpenAI
+credits.
 
 The engine wraps raw pgvector SQL in a LangChain `BaseRetriever` rather than using
 LangChain's `PGVector` vectorstore, so the `chunks` schema stays under the project's
@@ -115,6 +92,21 @@ cd backend-rag-context-pipeline && uvicorn api.main:app --reload
 
 To index a different PDF, drop it in `indexing-rag-context-pipeline/data/` and update
 `PDF_PATH` in that repo's `build_index.py`.
+
+To put the HTTP API behind the shared-secret gate, set `RAG_API_KEY` in the backend's
+environment; clients then send it as `X-API-Key`. Leave it unset for keyless local dev.
+
+## Tests
+
+The engine and backend repos each carry an **offline unit-test suite** (run with
+`python -m pytest` from the repo root) plus a GitHub Actions workflow (on push to
+`main` and PRs). The suites need no database, no OpenAI key, and no model download —
+the leaves take their collaborators as arguments, so the tests swap in fakes.
+
+```bash
+cd engine-rag-context-pipeline  && python -m pytest    # 12 tests (retriever / chain / load_index)
+cd backend-rag-context-pipeline && python -m pytest    # 19 tests (ask+health / chat / auth)
+```
 
 ## Stack
 
