@@ -19,46 +19,41 @@ itself now holds only this documentation; all code lives in the sub-repos.
 | [`engine-rag-context-pipeline/`](https://github.com/obj809/engine-rag-context-pipeline) | query engine (retriever + LCEL chain), the REPL, and the retrieval eval | `python ask.py` / `python eval/run_eval.py` |
 | [`backend-rag-context-pipeline/`](https://github.com/obj809/backend-rag-context-pipeline) | HTTP API (FastAPI) over the engine | `uvicorn api.main:app` |
 
-Each sub-repo has its own README, `requirements.txt`, and `.env.example`.
+Each sub-repo has its own README; the three Python repos (indexing, engine, backend)
+also ship a `requirements.txt` and `.env.example`, while the Docker-only `vector-db`
+repo needs neither.
 
 ## How it works
 
 ![Architecture diagram: indexing writes chunks to Postgres + pgvector; the engine retrieves top-k chunks and composes a page-cited answer via OpenAI; the backend exposes it over HTTP](diagram.png)
 
 The dashed edge is a **build/import-time** relationship, not a network call: the
-backend imports the engine's leaf modules (and its Docker image copies them in),
-so at runtime only the database and OpenAI are remote.
+backend imports the engine's leaf modules, so at runtime only the database and
+OpenAI are remote.
 
 The repos communicate **only** through the Postgres `chunks` table. Indexing writes
-the chunks, their embeddings, the source `page`, and the `embedding_model` name once
-per document; the engine retrieves the top-k via a SQL cosine-distance search
+the chunks, their embeddings, the source `page`, and the `embedding_model` name; the
+engine retrieves the top-k via a SQL cosine-distance search
 (`ORDER BY embedding <=> query LIMIT k`) and composes the answer as a LangChain LCEL
-chain (`retriever | prompt | llm | parser`). The backend imports the engine's leaf
-modules to expose the same chain over HTTP — as blocking JSON (`/ask`) and as a
-streamed `text/plain` chat endpoint (`/chat`, consumed by a separate chat-frontend
-project). The `embedding_model` column is the glue
-that stops the query side embedding with a different model than the index was built
-with.
+chain (`retriever | prompt | llm | parser`). The backend exposes that chain over
+HTTP — blocking JSON (`/ask`) and a streamed chat endpoint (`/chat`). The
+`embedding_model` column keeps the query side embedding with the same model the
+index was built with.
 
-Both write endpoints are guarded by an **optional shared-secret header**. Set
-`RAG_API_KEY` and every `/ask`/`/chat` request must carry `X-API-Key: <value>` (a
-timing-safe check, rejected with `401` before any embedding/retrieval/LLM work), and
-the interactive docs (`/docs`, `/redoc`, `/openapi.json`) are disabled; leave it
-unset and the keyless local-dev workflow is unchanged. `GET /health` stays open
-either way. This is the gate that lets the endpoint go public without burning OpenAI
-credits.
+Both write endpoints can sit behind an optional API-key header; leave it unset for
+keyless local dev. `GET /health` stays open either way.
 
-The engine wraps raw pgvector SQL in a LangChain `BaseRetriever` rather than using
+The engine wraps raw pgvector SQL in a LangChain `BaseRetriever` rather than
 LangChain's `PGVector` vectorstore, so the `chunks` schema stays under the project's
 control. Embeddings are local `sentence-transformers` (`BAAI/bge-small-en-v1.5`, no
 API key); only `gpt-5.4-nano` is called through LangChain (`ChatOpenAI`).
 
 **Known limitation — charts and figures.** PyMuPDF4LLM extracts text, tables, and
-headings well, but discards data labels embedded in **charts/figures** as picture
-content. This report is chart-heavy, so some figures' numbers (e.g. the
-methane-by-sector pie chart) are not in the index; recovering them would require
-vision-based extraction. Affected eval questions are flagged with
-`"chart_dependent": true` in `engine-rag-context-pipeline/eval/dataset.jsonl`.
+headings well, but discards data labels embedded in **charts/figures**. This report
+is chart-heavy, so some figures' numbers (e.g. the methane-by-sector pie chart) are
+not in the index; recovering them would require vision-based extraction. Affected
+eval questions are flagged with `"chart_dependent": true` in
+`engine-rag-context-pipeline/eval/dataset.jsonl`.
 
 ## Full local setup
 
@@ -93,8 +88,8 @@ cd backend-rag-context-pipeline && uvicorn api.main:app --reload
 To index a different PDF, drop it in `indexing-rag-context-pipeline/data/` and update
 `PDF_PATH` in that repo's `build_index.py`.
 
-To put the HTTP API behind the shared-secret gate, set `RAG_API_KEY` in the backend's
-environment; clients then send it as `X-API-Key`. Leave it unset for keyless local dev.
+To put the HTTP API behind the optional API-key gate, see the backend repo's README;
+leave it unset for keyless local dev.
 
 ## Tests
 
