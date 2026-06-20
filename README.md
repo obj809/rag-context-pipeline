@@ -1,10 +1,11 @@
 # RAG Context Pipeline
 
-A minimal Retrieval-Augmented Generation (RAG) pipeline over a single PDF. Loads a
-PDF, splits it into chunks, embeds each chunk locally, stores the vectors in
+A minimal Retrieval-Augmented Generation (RAG) pipeline over the three-volume
+Environment Protection and Biodiversity Conservation Act 1999. Loads the PDFs,
+splits them into chunks, embeds each chunk locally, stores the vectors in
 Postgres + pgvector, and answers questions by retrieving the most relevant chunks
-and sending them to an OpenAI model — with answers that cite the page each fact
-came from.
+and sending them to an OpenAI model — with answers that cite the volume and page
+each fact came from.
 
 This umbrella project has been split into **four independent repos**, one per
 concern, each nested here as its own git repo (with its own remote). The umbrella
@@ -15,7 +16,7 @@ itself now holds only this documentation; all code lives in the sub-repos.
 | Repo | Owns | Entry point |
 |---|---|---|
 | [`vector-db-rag-context-pipeline/`](https://github.com/obj809/vector-db-rag-context-pipeline) | Postgres + pgvector (Docker) | `docker compose up -d` |
-| [`indexing-rag-context-pipeline/`](https://github.com/obj809/indexing-rag-context-pipeline) | PDF → chunks → embeddings → `chunks` table; the source PDF | `python build_index.py` |
+| [`indexing-rag-context-pipeline/`](https://github.com/obj809/indexing-rag-context-pipeline) | PDFs → chunks → embeddings → `chunks` table; the source PDFs | `python build_index.py` |
 | [`engine-rag-context-pipeline/`](https://github.com/obj809/engine-rag-context-pipeline) | query engine (retriever + LCEL chain), the REPL, and the retrieval eval | `python ask.py` / `python eval/run_eval.py` |
 | [`backend-rag-context-pipeline/`](https://github.com/obj809/backend-rag-context-pipeline) | HTTP API (FastAPI) over the engine | `uvicorn api.main:app` |
 
@@ -25,15 +26,15 @@ repo needs neither.
 
 ## How it works
 
-![Architecture diagram: indexing writes chunks to Postgres + pgvector; the engine retrieves top-k chunks and composes a page-cited answer via OpenAI; the backend exposes it over HTTP](diagram.png)
+![Architecture diagram: indexing writes chunks to Postgres + pgvector; the engine retrieves top-k chunks and composes a volume/page-cited answer via OpenAI; the backend exposes it over HTTP](diagram.png)
 
 The dashed edge is a **build/import-time** relationship, not a network call: the
 backend imports the engine's leaf modules, so at runtime only the database and
 OpenAI are remote.
 
 The repos communicate **only** through the Postgres `chunks` table. Indexing writes
-the chunks, their embeddings, the source `page`, and the `embedding_model` name; the
-engine retrieves the top-k via a SQL cosine-distance search
+the chunks, their embeddings, the source `page` and `volume`, and the `embedding_model`
+name; the engine retrieves the top-k via a SQL cosine-distance search
 (`ORDER BY embedding <=> query LIMIT k`) and composes the answer as a LangChain LCEL
 chain (`retriever | prompt | llm | parser`). The backend exposes that chain over
 HTTP — blocking JSON (`/ask`) and a streamed chat endpoint (`/chat`). The
@@ -48,12 +49,12 @@ LangChain's `PGVector` vectorstore, so the `chunks` schema stays under the proje
 control. Embeddings are local `sentence-transformers` (`BAAI/bge-small-en-v1.5`, no
 API key); only `gpt-5.4-nano` is called through LangChain (`ChatOpenAI`).
 
-**Known limitation — charts and figures.** PyMuPDF4LLM extracts text, tables, and
-headings well, but discards data labels embedded in **charts/figures**. This report
-is chart-heavy, so some figures' numbers (e.g. the methane-by-sector pie chart) are
-not in the index; recovering them would require vision-based extraction. Affected
-eval questions are flagged with `"chart_dependent": true` in
-`engine-rag-context-pipeline/eval/dataset.jsonl`.
+**Extraction fit.** PyMuPDF4LLM extracts text, tables, and headings well — a strong
+match for a legal Act, which is text and tables with no chart data to lose. It also
+preserves the Act's `Chapter / Part / Division / Section` hierarchy in a per-page
+running header, so retrieved chunks carry their structural context inline. (Pages
+restart per volume, which is why citations are `[Volume N, p.M]` rather than a bare
+page number.)
 
 ## Full local setup
 
