@@ -1,6 +1,6 @@
 # RAG Context Pipeline
 
-A minimal Retrieval-Augmented Generation (RAG) pipeline over the three-volume
+A Retrieval-Augmented Generation (RAG) pipeline over the three-volume
 Environment Protection and Biodiversity Conservation Act 1999. Loads the PDFs,
 splits them into chunks, embeds each chunk locally, stores the vectors in
 Postgres + pgvector, and answers questions by retrieving the most relevant chunks
