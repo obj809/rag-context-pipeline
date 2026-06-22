@@ -19,3 +19,4 @@ vector-db-rag-context-pipeline/
 engine-rag-context-pipeline/
 indexing-rag-context-pipeline/
 .DS_Store
+diagrams
