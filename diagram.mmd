@@ -1,0 +1,37 @@
+%%{init: {"theme":"neutral","themeVariables":{"clusterBkg":"#ffffde","clusterBorder":"#aaaa33"},"flowchart":{"nodeSpacing":70,"rankSpacing":120,"padding":20}}}%%
+flowchart LR
+    subgraph engine["engine-rag-context-pipeline (query side)"]
+        eval["eval/run_eval.py<br/>hit-rate@k · MRR"]
+        ret["retriever.py<br/>SQL cosine top-k"]
+        repl["ask.py<br/>(REPL)"]
+        chain["chain.py<br/>LCEL answer chain"]
+        eval --> ret
+        repl --> chain
+        ret -- "question + chunks" --> chain
+    end
+
+    openai["OpenAI<br/>gpt-5.4-nano"]
+    chain -- "context (top-k chunks)" --> openai
+    openai -- "page-cited answer" --> chain
+
+    client(["user / client"])
+
+    subgraph backend["backend-rag-context-pipeline (FastAPI, Docker)"]
+        api["api/main.py<br/>POST /ask · POST /chat (stream)<br/>GET /health"]
+    end
+    client -- "HTTP (optional X-API-Key)" --> api
+    backend -. "imports retriever + chain (sys.path bridge)" .-> engine
+
+    subgraph indexing["indexing-rag-context-pipeline (run once per document)"]
+        pdf["EPBC Act PDFs<br/>(3 volumes)"] --> build["build_index.py<br/>load → chunk → embed<br/>(BGE, local)"]
+    end
+
+    subgraph vectordb["vector-db-rag-context-pipeline (Docker)"]
+        db[("Postgres + pgvector — chunks table<br/>content · embedding · page<br/>volume · embedding_model")]
+    end
+
+    build -- "writes rows (drop + recreate)" --> db
+    db -- "top-k chunks" --> ret
+
+    classDef leaf fill:#f7f7f7,stroke:#9aa0a6,stroke-width:1px,color:#202124;
+    class eval,ret,repl,chain,openai,api,pdf,build,db,client leaf;
