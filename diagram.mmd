@@ -1,4 +1,4 @@
-%%{init: {"theme":"neutral","themeVariables":{"clusterBkg":"#ffffde","clusterBorder":"#aaaa33"},"flowchart":{"nodeSpacing":70,"rankSpacing":120,"padding":20}}}%%
+%%{init: {"theme":"neutral","flowchart":{"nodeSpacing":70,"rankSpacing":120,"padding":20}}}%%
 flowchart LR
     subgraph engine["engine-rag-context-pipeline (query side)"]
         eval["eval/run_eval.py<br/>hit-rate@k · MRR"]
@@ -33,5 +33,11 @@ flowchart LR
     build -- "writes rows (drop + recreate)" --> db
     db -- "top-k chunks" --> ret
 
-    classDef leaf fill:#f7f7f7,stroke:#9aa0a6,stroke-width:1px,color:#202124;
+    classDef leaf fill:#ffffff,stroke:#b0b4ba,stroke-width:1px,color:#202124;
     class eval,ret,repl,chain,openai,api,pdf,build,db,client leaf;
+
+    %% subgraph background (uniform very light grey)
+    style indexing fill:#f6f6f7,stroke:#e2e2e4
+    style vectordb fill:#f6f6f7,stroke:#e2e2e4
+    style engine   fill:#f6f6f7,stroke:#e2e2e4
+    style backend  fill:#f6f6f7,stroke:#e2e2e4
