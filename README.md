@@ -88,8 +88,9 @@ cd engine-rag-context-pipeline && python ask.py            # interactive REPL
 cd backend-rag-context-pipeline && uvicorn api.main:app --reload
 ```
 
-To index a different PDF, drop it in `indexing-rag-context-pipeline/data/` and update
-`PDF_PATH` in that repo's `build_index.py`.
+To index a different set of PDFs, drop them in a folder and point `PDF_DIR` in
+`indexing-rag-context-pipeline/build_index.py` at it (it globs `*.pdf` and derives
+each volume label from the filename).
 
 To put the HTTP API behind the optional API-key gate, see the backend repo's README;
 leave it unset for keyless local dev.
