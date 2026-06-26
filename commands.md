@@ -13,6 +13,14 @@ deactivate
 pip install -r requirements.txt
 ```
 
+All Docker services also attach to a shared external bridge network, `webnet`, so
+they share one host-wide network with the project's other containers (LLM
+frontend, LiteLLM, Ollama). Create it once before any `docker compose` run:
+
+```bash
+docker network create webnet        # one-time; no-op if it already exists
+```
+
 ```bash
 # 1. vector-db-rag-context-pipeline — Postgres + pgvector (Docker)
 cd vector-db-rag-context-pipeline
@@ -36,7 +44,7 @@ docker compose run --rm engine python eval/run_eval.py    # eval in Docker (no k
 cd backend-rag-context-pipeline
 uvicorn api.main:app --reload
 uvicorn api.main:app --host 0.0.0.0 --port 8000     # bind explicitly
-docker compose up --build                            # or run it in Docker (joins the vector-db network)
+docker compose up --build                            # or run it in Docker (joins the vector-db + shared webnet networks; reaches LiteLLM over webnet)
 curl localhost:8000/health
 # more curl examples: backend-rag-context-pipeline/curl-commands.md
 ```
