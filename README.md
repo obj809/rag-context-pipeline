@@ -49,7 +49,7 @@ keyless local dev. `GET /health` stays open either way.
 The engine wraps raw pgvector SQL in a LangChain `BaseRetriever` rather than
 LangChain's `PGVector` vectorstore, so the `chunks` schema stays under the project's
 control. Embeddings are local `sentence-transformers` (`BAAI/bge-small-en-v1.5`, no
-API key); only `gpt-5.4-nano` is called through LangChain (`ChatOpenAI`).
+API key); only `gpt-5.4-mini` is called through LangChain (`ChatOpenAI`).
 
 **Extraction fit.** PyMuPDF4LLM extracts text, tables, and headings well — a strong
 match for a legal Act, which is text and tables with no chart data to lose. It also
@@ -116,7 +116,7 @@ cd backend-rag-context-pipeline && python -m pytest    # 19 tests (ask+health / 
 | Embeddings | `sentence-transformers` + `BAAI/bge-small-en-v1.5` (local) | indexing + engine |
 | Vector store | Postgres + `pgvector` (Dockerized), via `psycopg` | vector-db |
 | Retrieval + orchestration | LangChain LCEL — `langchain-core` | engine |
-| Answer generation | OpenAI (`gpt-5.4-nano`) via `langchain-openai` `ChatOpenAI` | engine |
+| Answer generation | OpenAI (`gpt-5.4-mini`) via `langchain-openai` `ChatOpenAI` | engine |
 | HTTP API | `fastapi` + `uvicorn`, pooled via `psycopg-pool` | backend |
 | Env loading | `python-dotenv` | all |
 
@@ -128,7 +128,7 @@ The knobs worth experimenting with live in each repo's README:
 |---|---|---|
 | `CHUNK_SIZE`, `CHUNK_OVERLAP` | `indexing-rag-context-pipeline/build_index.py` | 1200 / 150 chars |
 | `EMBEDDING_MODEL` | `indexing-rag-context-pipeline/build_index.py` | `BAAI/bge-small-en-v1.5` |
-| `TOP_K`, `OPENAI_MODEL` | `engine-rag-context-pipeline/ask.py` | 6 / `gpt-5.4-nano` |
+| `TOP_K`, `OPENAI_MODEL` | `engine-rag-context-pipeline/ask.py` | 6 / `gpt-5.4-mini` |
 | `QUERY_PREFIX` | `engine-rag-context-pipeline/retriever.py` | BGE instruction prefix |
 
 Changing `EMBEDDING_MODEL` requires re-running `build_index.py` — the rebuild drops
