@@ -1,15 +1,11 @@
-example-architecture
 CLAUDE.md
 .env
 .venv
 data/index/
-integration-plan.md
-deployment-plan.md
-notes.md
-hostinger.png
 TODO.md
-frontend-auth-handoff.md
-frontend-key-setup.md
+HANDOFF.md
+.DS_Store
+diagrams
 
 __pycache__
 
@@ -18,5 +14,4 @@ backend-rag-context-pipeline/
 vector-db-rag-context-pipeline/
 engine-rag-context-pipeline/
 indexing-rag-context-pipeline/
-.DS_Store
-diagrams
+
