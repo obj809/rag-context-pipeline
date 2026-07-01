@@ -7,9 +7,9 @@ Postgres + pgvector, and answers questions by retrieving the most relevant chunk
 and sending them to an OpenAI model, with answers that cite the volume and page
 each fact came from.
 
-This umbrella project has been split into **four independent repos**, one per
-concern, each nested here as its own git repo (with its own remote). The umbrella
-itself now holds only this documentation; all code lives in the sub-repos.
+This umbrella project has been split into four independent repos, one per
+concern, each nested here as its own git repo. The umbrella
+itself holds only documentation; all code lives in the sub-repos.
 
 ## Repositories
 
